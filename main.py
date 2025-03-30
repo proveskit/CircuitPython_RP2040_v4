@@ -44,7 +44,12 @@ logger.info("Booting", software_version=__version__, published_date="November 19
 
 loiter_time: int = 5
 
-exit()
+wait_amt = 0
+
+while True:
+    wait_amt += 1
+    print(f"Waited for {wait_amt}")
+    time.sleep(1)
 
 try:
     for i in range(loiter_time):
