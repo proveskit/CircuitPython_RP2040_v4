@@ -21,26 +21,25 @@ except ImportError:
 
 import lib.pysquared.functions as functions
 import lib.pysquared.nvm.register as register
-import lib.pysquared.pysquared as pysquared
+from lib.pysquared.satellite import Satellite
 from lib.pysquared.config.config import Config
 from lib.pysquared.hardware.digitalio import initialize_pin
-from lib.pysquared.hardware.rfm9x.factory import RFM9xFactory
-from lib.pysquared.hardware.rfm9x.manager import RFM9xManager
+from lib.pysquared.hardware.radio.manager.rfm9x import RFM9xManager
 from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.nvm.flag import Flag
-from lib.pysquared.rtc.rtc_common import RTC
+from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
 from lib.pysquared.sleep_helper import SleepHelper
 from version import __version__
 
-RTC.init()
+rtc = MicrocontrollerManager()
 
 logger: Logger = Logger(
     error_counter=Counter(index=register.ERRORCNT, datastore=microcontroller.nvm),
     colorized=False,
 )
 
-logger.info("Booting", software_version=__version__, published_date="November 19, 2024")
+logger.info("Booting", software_version=__version__)
 
 loiter_time: int = 5
 
@@ -52,20 +51,18 @@ try:
     logger.debug("Initializing Config")
     config: Config = Config("config.json")
 
-    c = pysquared.Satellite(config, logger, __version__)
+    c = Satellite(logger, config)
     c.watchdog_pet()
     sleep_helper = SleepHelper(c, logger)
 
     radio_manager = RFM9xManager(
         logger,
+        config.radio,
         Flag(index=register.FLAG, bit_index=7, datastore=microcontroller.nvm),
-        RFM9xFactory(
-            c.spi0,
-            initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
-            initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
-            config.radio,
-        ),
         config.is_licensed,
+        c.spi0,
+        initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
+        initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
     )
 
     f = functions.functions(c, logger, config, sleep_helper, radio_manager)
