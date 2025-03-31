@@ -30,6 +30,10 @@ from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.nvm.flag import Flag
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
 from lib.pysquared.sleep_helper import SleepHelper
+from lib.pysquared.watchdog import Watchdog
+from lib.pysquared.hardware.magnetometer.manager.lis2mdl import LIS2MDLManager
+from lib.pysquared.hardware.imu.manager.lsm6dsox import LSM6DSOXManager
+from lib.pysquared.hardware.busio import initialize_i2c_bus, initialize_spi_bus
 from version import __version__
 
 rtc = MicrocontrollerManager()
@@ -48,31 +52,61 @@ try:
         logger.info(f"Code Starting in {loiter_time-i} seconds")
         time.sleep(1)
 
+    watchdog = Watchdog(logger, board.WDT_WDI)
+    watchdog.pet()
+
     logger.debug("Initializing Config")
     config: Config = Config("config.json")
 
-    c = Satellite(logger, config)
-    c.watchdog_pet()
-    sleep_helper = SleepHelper(c, logger)
+    spi0 = initialize_spi_bus(
+        logger,
+        board.SPI0_SCK,
+        board.SPI0_MOSI,
+        board.SPI0_MISO,
+    )
 
     radio_manager = RFM9xManager(
         logger,
         config.radio,
         Flag(index=register.FLAG, bit_index=7, datastore=microcontroller.nvm),
         config.is_licensed,
-        c.spi0,
+        spi0,
         initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
     )
 
-    f = functions.functions(c, logger, config, sleep_helper, radio_manager)
+    i2c1 = initialize_i2c_bus(
+        logger,
+        board.I2C1_SCL,
+        board.I2C1_SDA,
+        100000,
+    )
+
+    magnetometer = LIS2MDLManager(logger, i2c1)
+
+    imu = LSM6DSOXManager(logger, i2c1, 0x6B)
+
+    c = Satellite(logger, config)
+
+    sleep_helper = SleepHelper(c, logger)
+
+    f = functions.functions(
+        c, 
+        logger, 
+        config, 
+        sleep_helper, 
+        radio_manager,
+        magnetometer,
+        imu,
+        watchdog,
+    )
 
     def initial_boot():
-        c.watchdog_pet()
+        watchdog.pet()
         f.beacon()
-        c.watchdog_pet()
+        watchdog.pet()
         f.listen()
-        c.watchdog_pet()
+        watchdog.pet()
 
     try:
         c.boot_count.increment()
@@ -94,10 +128,10 @@ try:
     def send_imu_data():
         logger.info("Looking to get imu data...")
         IMUData = []
-        c.watchdog_pet()
+        watchdog.pet()
         logger.info("IMU has baton")
         IMUData = f.get_imu_data()
-        c.watchdog_pet()
+        watchdog.pet()
         f.send(IMUData)
 
     def main():
@@ -110,7 +144,7 @@ try:
         f.listen_loiter()
 
         f.all_face_data()
-        c.watchdog_pet()
+        watchdog.pet()
         f.send_face()
 
         f.listen_loiter()
@@ -125,13 +159,13 @@ try:
 
     def critical_power_operations():
         initial_boot()
-        c.watchdog_pet()
+        watchdog.pet()
 
         sleep_helper.long_hibernate()
 
     def minimum_power_operations():
         initial_boot()
-        c.watchdog_pet()
+        watchdog.pet()
 
         sleep_helper.short_hibernate()
 
