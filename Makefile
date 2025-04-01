@@ -20,7 +20,7 @@ PYSQUARED ?= git+https://github.com/proveskit/pysquared@$(PYSQUARED_VERSION)
 download-libraries: uv .venv ## Download the required libraries
 	@echo "Downloading libraries..."
 	@$(UV) pip install --requirement lib/requirements.txt --target lib --no-deps --upgrade --quiet
-	$(UV) pip --no-cache install $(PYSQUARED) --target lib --no-deps --upgrade --quiet
+	@$(UV) pip --no-cache install $(PYSQUARED) --target lib --no-deps --upgrade --quiet
 
 	@rm -rf lib/*.dist-info
 	@rm -rf lib/.lock

@@ -33,7 +33,8 @@ from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
 from lib.pysquared.hardware.magnetometer.manager.lis2mdl import LIS2MDLManager
 from lib.pysquared.hardware.imu.manager.lsm6dsox import LSM6DSOXManager
-from lib.pysquared.hardware.busio import initialize_i2c_bus, initialize_spi_bus
+from lib.pysquared.hardware.busio import initialize_i2c_bus, _spi_init
+from lib.pysquared.cdh import CommandDataHandler
 from version import __version__
 
 rtc = MicrocontrollerManager()
@@ -58,18 +59,18 @@ try:
     logger.debug("Initializing Config")
     config: Config = Config("config.json")
 
-    spi0 = initialize_spi_bus(
+    # TODO(nateinaction): fix spi init
+    spi0 = _spi_init(
         logger,
         board.SPI0_SCK,
         board.SPI0_MOSI,
         board.SPI0_MISO,
     )
 
-    radio_manager = RFM9xManager(
+    radio = RFM9xManager(
         logger,
         config.radio,
         Flag(index=register.FLAG, bit_index=7, datastore=microcontroller.nvm),
-        config.is_licensed,
         spi0,
         initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
@@ -88,17 +89,20 @@ try:
 
     c = Satellite(logger, config)
 
-    sleep_helper = SleepHelper(c, logger)
+    sleep_helper = SleepHelper(c, logger, watchdog)
+
+    cdh = CommandDataHandler(config, logger, radio)
 
     f = functions.functions(
         c, 
         logger, 
         config, 
         sleep_helper, 
-        radio_manager,
+        radio,
         magnetometer,
         imu,
         watchdog,
+        cdh,
     )
 
     def initial_boot():
@@ -176,19 +180,15 @@ try:
             c.check_reboot()
 
             if c.power_mode == "critical":
-                c.rgb = (0, 0, 0)
                 critical_power_operations()
 
             elif c.power_mode == "minimum":
-                c.rgb = (255, 0, 0)
                 minimum_power_operations()
 
             elif c.power_mode == "normal":
-                c.rgb = (255, 255, 0)
                 main()
 
             elif c.power_mode == "maximum":
-                c.rgb = (0, 255, 0)
                 main()
 
             else:
@@ -201,9 +201,6 @@ try:
         microcontroller.reset()
     finally:
         logger.info("Going Neutral!")
-
-        c.rgb = (0, 0, 0)
-        c.hardware["WDT"] = False
 
 except Exception as e:
     logger.critical("An exception occured within main.py", e)
