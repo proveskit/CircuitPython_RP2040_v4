@@ -46,7 +46,6 @@ logger.info(
     "Booting",
     hardware_version=os.uname().version,
     software_version=__version__,
-    published_date="November 19, 2024",
 )
 
 loiter_time: int = 5
