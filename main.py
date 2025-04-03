@@ -19,6 +19,8 @@ try:
 except ImportError:
     import board
 
+import os
+
 import lib.pysquared.functions as functions
 import lib.pysquared.nvm.register as register
 from lib.pysquared.cdh import CommandDataHandler
@@ -44,7 +46,11 @@ logger: Logger = Logger(
     colorized=False,
 )
 
-logger.info("Booting", software_version=__version__)
+logger.info(
+    "Booting",
+    hardware_version=os.uname().version,
+    software_version=__version__,
+)
 
 loiter_time: int = 5
 
