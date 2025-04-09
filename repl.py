@@ -12,4 +12,4 @@ logger: Logger = Logger(
 )
 config: Config = Config("config.json")
 logger.info("Initializing a cubesat object as `c` in the REPL...")
-c: Satellite = Satellite(config, logger)
+c: Satellite = Satellite(logger, config)
