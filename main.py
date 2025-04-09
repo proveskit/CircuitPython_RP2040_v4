@@ -35,6 +35,7 @@ from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.nvm.flag import Flag
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
 from lib.pysquared.satellite import Satellite
+from lib.pysquared.sdcard.manager import SDCardManager
 from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
 from version import __version__
@@ -72,6 +73,8 @@ try:
         board.SPI0_MOSI,
         board.SPI0_MISO,
     )
+
+    sdcard = SDCardManager(spi0, board.SPI0_CS0, 400000)
 
     radio = RFM9xManager(
         logger,
