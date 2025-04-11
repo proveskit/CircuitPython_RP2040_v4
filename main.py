@@ -74,7 +74,7 @@ try:
         board.SPI0_MISO,
     )
 
-    sdcard = SDCardManager(spi0, board.SPI0_CS0, 400000)
+    sdcard = SDCardManager(spi0, board.SPI0_CS1, 400000)
 
     radio = RFM9xManager(
         logger,
