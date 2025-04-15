@@ -60,7 +60,6 @@ try:
         time.sleep(1)
 
     watchdog = Watchdog(logger, board.WDT_WDI)
-    watchdog.pet()
 
     logger.debug("Initializing Config")
     config: Config = Config("config.json")
@@ -112,11 +111,8 @@ try:
     )
 
     def initial_boot():
-        watchdog.pet()
         f.beacon()
-        watchdog.pet()
         f.listen()
-        watchdog.pet()
 
     try:
         c.boot_count.increment()
@@ -138,10 +134,8 @@ try:
     def send_imu_data():
         logger.info("Looking to get imu data...")
         IMUData = []
-        watchdog.pet()
         logger.info("IMU has baton")
         IMUData = imu.get_gyro_data()
-        watchdog.pet()
         radio.send(IMUData)
 
     def main():
@@ -154,7 +148,6 @@ try:
         f.listen_loiter()
 
         f.all_face_data()
-        watchdog.pet()
         f.send_face()
 
         f.listen_loiter()
@@ -169,13 +162,11 @@ try:
 
     def critical_power_operations():
         initial_boot()
-        watchdog.pet()
 
         sleep_helper.long_hibernate()
 
     def minimum_power_operations():
         initial_boot()
-        watchdog.pet()
 
         sleep_helper.short_hibernate()
 
