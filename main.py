@@ -34,6 +34,7 @@ from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.nvm.flag import Flag
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
+from lib.pysquared.rtc.manager.rv3028 import RV3028Manager
 from lib.pysquared.satellite import Satellite
 from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
@@ -41,10 +42,12 @@ from version import __version__
 
 rtc = MicrocontrollerManager()
 
+
 logger: Logger = Logger(
     error_counter=Counter(index=register.ERRORCNT, datastore=microcontroller.nvm),
-    colorized=False,
+    colorized=True,
 )
+
 
 logger.info(
     "Booting",
@@ -89,13 +92,19 @@ try:
         100000,
     )
 
+    rv3028 = RV3028Manager(logger, i2c1)
+    rv3028.set_time(1, 1, 1, 1, 1, 1, 1)
+
+    print(rv3028.get_time())
+    print(rv3028.get_date())
+
     magnetometer = LIS2MDLManager(logger, i2c1)
 
     imu = LSM6DSOXManager(logger, i2c1, 0x6B)
 
     c = Satellite(logger, config)
 
-    sleep_helper = SleepHelper(c, logger, watchdog)
+    sleep_helper = SleepHelper(c, logger, watchdog, config)
 
     cdh = CommandDataHandler(config, logger, radio)
 
@@ -146,7 +155,8 @@ try:
 
     def main():
         f.beacon()
-
+        print(rv3028.get_time())
+        print(rv3028.get_date())
         f.listen_loiter()
 
         f.state_of_health()
