@@ -38,7 +38,7 @@ sync-time: uv ## Syncs th time from your computer to the PROVES Kit board
 fmt: pre-commit-install ## Lint and format files
 	$(UVX) pre-commit run --all-files
 
-typecheck: .venv ## Run type check
+typecheck: .venv download-libraries ## Run type check
 	@$(UV) run -m pyright .
 
 BOARD_MOUNT_POINT ?= ""
