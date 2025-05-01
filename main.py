@@ -147,6 +147,7 @@ try:
 
     def main():
         f.beacon()
+
         f.listen_loiter()
 
         f.state_of_health()
