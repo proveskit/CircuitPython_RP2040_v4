@@ -96,7 +96,7 @@ try:
 
     c = Satellite(logger, config)
 
-    sleep_helper = SleepHelper(c, logger, watchdog)
+    sleep_helper = SleepHelper(c, logger, watchdog, config)
 
     cdh = CommandDataHandler(config, logger, radio)
 
@@ -147,7 +147,8 @@ try:
 
     def main():
         f.beacon()
-
+        sleep_helper.safe_sleep(16)
+        sleep_helper.safe_sleep(100)
         f.listen_loiter()
 
         f.state_of_health()
