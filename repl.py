@@ -1,6 +1,5 @@
 import board
 import digitalio
-import microcontroller
 from busio import SPI
 
 import lib.pysquared.nvm.register as register
@@ -15,7 +14,7 @@ from lib.pysquared.repl.radio_test import RadioTest
 from lib.pysquared.satellite import Satellite
 
 logger: Logger = Logger(
-    error_counter=Counter(index=register.ERRORCNT, datastore=microcontroller.nvm),
+    error_counter=Counter(index=register.ERRORCNT),
     colorized=False,
 )
 config: Config = Config("config.json")
@@ -32,7 +31,7 @@ spi0: SPI = _spi_init(
 radio = RFM9xManager(
     logger,
     config.radio,
-    Flag(index=register.FLAG, bit_index=7, datastore=microcontroller.nvm),
+    Flag(index=register.FLAG, bit_index=7),
     spi0,
     initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
     initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
