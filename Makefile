@@ -133,3 +133,8 @@ endif
 define compile_mpy
 	@$(UV) run python -c "import os, subprocess; [subprocess.run(['$(MPY_CROSS)', os.path.join(root, file)]) for root, _, files in os.walk('lib') for file in files if file.endswith('.py')]" || exit 1
 endef
+
+# install-firmware
+.PHONY: install-firmware
+install-firmware:
+	@$(UV) run python install_firmware.py
