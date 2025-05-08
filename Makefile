@@ -31,7 +31,7 @@ pre-commit-install: uv
 	@$(UVX) pre-commit install > /dev/null
 
 .PHONY: sync-time
-sync-time: uv ## Syncs th time from your computer to the PROVES Kit board
+sync-time: uv ## Syncs the time from your computer to the PROVES Kit board
 	$(UVX) --from git+https://github.com/proveskit/sync-time@1.0.1 sync-time
 
 .PHONY: fmt
@@ -53,6 +53,11 @@ else
 	@rm $(BOARD_MOUNT_POINT)/code.py > /dev/null 2>&1 || true
 	$(call rsync_to_dest,artifacts/proves,$(BOARD_MOUNT_POINT))
 endif
+
+# install-firmware
+.PHONY: install-firmware
+install-firmware: uv ## Install the board firmware onto a connected PROVES Kit
+	@$(UVX) --from git+https://github.com/proveskit/install-firmware@1.0.0 install-firmware v4
 
 .PHONY: clean
 clean: ## Remove all gitignored files such as downloaded libraries and artifacts
@@ -133,8 +138,3 @@ endif
 define compile_mpy
 	@$(UV) run python -c "import os, subprocess; [subprocess.run(['$(MPY_CROSS)', os.path.join(root, file)]) for root, _, files in os.walk('lib') for file in files if file.endswith('.py')]" || exit 1
 endef
-
-# install-firmware
-.PHONY: install-firmware
-install-firmware:
-	@$(UV) run python install_firmware.py
