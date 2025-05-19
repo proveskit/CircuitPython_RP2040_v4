@@ -14,3 +14,4 @@ firmware.uf2
 # libs
 /lib/*
 !/lib/requirements.txt
+!/lib/proveskit_rp2040_v4/

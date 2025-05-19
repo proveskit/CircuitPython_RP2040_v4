@@ -23,7 +23,8 @@ except ImportError:
 import os
 
 import lib.pysquared.functions as functions
-import lib.pysquared.nvm.register as register
+from lib.proveskit_rp2040_v4.register import BitIndex, Register
+from lib.pysquared.beacon import Beacon
 from lib.pysquared.cdh import CommandDataHandler
 from lib.pysquared.config.config import Config
 from lib.pysquared.hardware.busio import _spi_init, initialize_i2c_bus
@@ -35,15 +36,20 @@ from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.nvm.flag import Flag
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
-from lib.pysquared.satellite import Satellite
 from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
 from version import __version__
 
+boot_time: float = time.monotonic()
+
 rtc = MicrocontrollerManager()
 
+(boot_count := Counter(index=Register.boot_count)).increment()
+error_count: Counter = Counter(index=Register.error_count)
+use_fsk = Flag(index=Register.flag, bit_index=BitIndex.use_fsk)
+
 logger: Logger = Logger(
-    error_counter=Counter(index=register.ERRORCNT),
+    error_counter=error_count,
     colorized=False,
 )
 
@@ -53,9 +59,8 @@ logger.info(
     software_version=__version__,
 )
 
-loiter_time: int = 5
-
 try:
+    loiter_time: int = 5
     for i in range(loiter_time):
         logger.info(f"Code Starting in {loiter_time-i} seconds")
         time.sleep(1)
@@ -77,7 +82,7 @@ try:
     radio = RFM9xManager(
         logger,
         config.radio,
-        Flag(index=register.FLAG, bit_index=7),
+        use_fsk,
         spi0,
         initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
@@ -94,38 +99,43 @@ try:
 
     imu = LSM6DSOXManager(logger, i2c1, 0x6B)
 
-    c = Satellite(logger, config)
-
-    sleep_helper = SleepHelper(c, logger, watchdog, config)
+    sleep_helper = SleepHelper(logger, watchdog, config)
 
     cdh = CommandDataHandler(config, logger, radio)
 
+    beacon = Beacon(
+        logger,
+        config.cubesat_name,
+        radio,
+        boot_time,
+        imu,
+        magnetometer,
+        radio,
+        use_fsk,
+        error_count,
+        boot_count,
+    )
+
     f = functions.functions(
-        c,
         logger,
         config,
         sleep_helper,
         radio,
-        magnetometer,
-        imu,
         watchdog,
         cdh,
     )
 
     def initial_boot():
         watchdog.pet()
-        f.beacon()
+        beacon.send()
         watchdog.pet()
         f.listen()
         watchdog.pet()
 
     try:
-        c.boot_count.increment()
-
         logger.info(
             "FC Board Stats",
             bytes_remaining=gc.mem_free(),
-            boot_number=c.boot_count.get(),
         )
 
         initial_boot()
@@ -146,11 +156,12 @@ try:
         radio.send(IMUData)
 
     def main():
-        f.beacon()
+        beacon.send()
 
         f.listen_loiter()
 
-        f.state_of_health()
+        # TODO(nateinaction): replace me
+        # f.state_of_health()
 
         f.listen_loiter()
 
@@ -182,22 +193,22 @@ try:
     try:
         while True:
             # L0 automatic tasks no matter the battery level
-            c.check_reboot()
+            # TODO(nateinaction): reemplement power level check when we have state of health
+            # c.check_reboot()
 
-            if c.power_mode == "critical":
-                critical_power_operations()
+            # if c.power_mode == "critical":
+            #     critical_power_operations()
 
-            elif c.power_mode == "minimum":
-                minimum_power_operations()
+            # elif c.power_mode == "minimum":
+            #     minimum_power_operations()
 
-            elif c.power_mode == "normal":
-                main()
+            # elif c.power_mode == "normal":
+            #     main()
 
-            elif c.power_mode == "maximum":
-                main()
+            # elif c.power_mode == "maximum":
+            #     main()
 
-            else:
-                f.listen()
+            main()
 
     except Exception as e:
         logger.critical("Critical in Main Loop", e)
