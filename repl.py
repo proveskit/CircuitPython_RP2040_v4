@@ -4,10 +4,8 @@ Published: May, 2025
 """
 
 import gc
-import time
 
 import digitalio
-import microcontroller
 from busio import SPI
 
 try:
@@ -48,6 +46,7 @@ logger.info(
     software_version=__version__,
 )
 
+try:
     watchdog = Watchdog(logger, board.WDT_WDI)
     watchdog.pet()
 
@@ -123,3 +122,6 @@ logger.info(
 
     finally:
         pass
+
+except Exception as e:
+    logger.critical("An exception occured within repl.py", e)
