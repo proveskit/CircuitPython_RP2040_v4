@@ -74,10 +74,12 @@ try:
         board.SPI0_MISO,
     )
 
+    use_fsk = Flag(index=register.FLAG, bit_index=7)
+
     radio = RFM9xManager(
         logger,
         config.radio,
-        Flag(index=register.FLAG, bit_index=7),
+        use_fsk,
         spi0,
         initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
