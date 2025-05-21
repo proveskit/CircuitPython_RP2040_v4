@@ -124,4 +124,4 @@ try:
         pass
 
 except Exception as e:
-    logger.critical("An exception occured within repl.py", e)
+    logger.critical("An exception occurred within repl.py", e)
