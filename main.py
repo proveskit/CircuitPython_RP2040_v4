@@ -9,6 +9,8 @@ Published: Nov 19, 2024
 """
 
 import gc
+import os
+import random
 import time
 
 import digitalio
@@ -20,9 +22,6 @@ try:
 except ImportError:
     import board
 
-import os
-
-import lib.pysquared.functions as functions
 from lib.proveskit_rp2040_v4.register import BitIndex, Register
 from lib.pysquared.beacon import Beacon
 from lib.pysquared.cdh import CommandDataHandler
@@ -32,6 +31,7 @@ from lib.pysquared.hardware.digitalio import initialize_pin
 from lib.pysquared.hardware.imu.manager.lsm6dsox import LSM6DSOXManager
 from lib.pysquared.hardware.magnetometer.manager.lis2mdl import LIS2MDLManager
 from lib.pysquared.hardware.radio.manager.rfm9x import RFM9xManager
+from lib.pysquared.hardware.radio.packetizer.packet_manager import PacketManager
 from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.nvm.flag import Flag
@@ -40,7 +40,7 @@ from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
 from version import __version__
 
-boot_time: float = time.monotonic()
+boot_time: float = time.time()
 
 rtc = MicrocontrollerManager()
 
@@ -88,6 +88,13 @@ try:
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
     )
 
+    packet_manager = PacketManager(
+        logger,
+        radio,
+        config.radio.license,
+        0.2,
+    )
+
     i2c1 = initialize_i2c_bus(
         logger,
         board.I2C1_SCL,
@@ -106,7 +113,7 @@ try:
     beacon = Beacon(
         logger,
         config.cubesat_name,
-        radio,
+        packet_manager,
         boot_time,
         imu,
         magnetometer,
@@ -116,20 +123,13 @@ try:
         boot_count,
     )
 
-    f = functions.functions(
-        logger,
-        config,
-        sleep_helper,
-        radio,
-        watchdog,
-        cdh,
-    )
-
     def initial_boot():
         watchdog.pet()
         beacon.send()
         watchdog.pet()
-        f.listen()
+        message: bytes | None = packet_manager.listen()
+        if message:
+            cdh.message_handler(message)
         watchdog.pet()
 
     try:
@@ -153,41 +153,87 @@ try:
         logger.info("IMU has baton")
         IMUData = imu.get_gyro_data()
         watchdog.pet()
-        radio.send(IMUData)
+        packet_manager.send(str(IMUData).encode("utf-8"))
 
     def main():
+        radio.send(config.radio.license.encode("utf-8"))
+
         beacon.send()
 
-        f.listen_loiter()
+        watchdog.pet()
+
+        message: bytes | None = packet_manager.listen()
+        if message:
+            cdh.message_handler(message)
+
+        watchdog.pet()
+
+        sleep_helper.safe_sleep(config.sleep_duration)
+
+        watchdog.pet()
 
         # TODO(nateinaction): replace me
         # f.state_of_health()
 
-        f.listen_loiter()
+        message: bytes | None = packet_manager.listen()
+        if message:
+            cdh.message_handler(message)
 
         watchdog.pet()
 
-        f.listen_loiter()
+        sleep_helper.safe_sleep(config.sleep_duration)
+
+        watchdog.pet()
+
+        message: bytes | None = packet_manager.listen()
+        if message:
+            cdh.message_handler(message)
+
+        watchdog.pet()
+
+        sleep_helper.safe_sleep(config.sleep_duration)
+
+        watchdog.pet()
 
         send_imu_data()
 
-        f.listen_loiter()
-
-        f.joke()
-
-        f.listen_loiter()
-
-    def critical_power_operations():
-        initial_boot()
         watchdog.pet()
 
-        sleep_helper.long_hibernate()
+        message: bytes | None = packet_manager.listen()
+        if message:
+            cdh.message_handler(message)
 
-    def minimum_power_operations():
-        initial_boot()
         watchdog.pet()
 
-        sleep_helper.short_hibernate()
+        sleep_helper.safe_sleep(config.sleep_duration)
+
+        watchdog.pet()
+
+        packet_manager.send(random.choice(config.jokes).encode("utf-8"))
+
+        watchdog.pet()
+
+        message: bytes | None = packet_manager.listen()
+        if message:
+            cdh.message_handler(message)
+
+        watchdog.pet()
+
+        sleep_helper.safe_sleep(config.sleep_duration)
+
+        watchdog.pet()
+
+    # def critical_power_operations():
+    #     initial_boot()
+    #     watchdog.pet()
+
+    #     sleep_helper.long_hibernate()
+
+    # def minimum_power_operations():
+    #     initial_boot()
+    #     watchdog.pet()
+
+    #     sleep_helper.short_hibernate()
 
     ######################### MAIN LOOP ##############################
     try:
