@@ -146,15 +146,6 @@ try:
     finally:
         pass
 
-    def send_imu_data():
-        logger.info("Looking to get imu data...")
-        IMUData = []
-        watchdog.pet()
-        logger.info("IMU has baton")
-        IMUData = imu.get_gyro_data()
-        watchdog.pet()
-        packet_manager.send(str(IMUData).encode("utf-8"))
-
     def main():
         radio.send(config.radio.license.encode("utf-8"))
 
@@ -166,11 +157,7 @@ try:
         if message:
             cdh.message_handler(message)
 
-        watchdog.pet()
-
         sleep_helper.safe_sleep(config.sleep_duration)
-
-        watchdog.pet()
 
         # TODO(nateinaction): replace me
         # f.state_of_health()
@@ -179,35 +166,19 @@ try:
         if message:
             cdh.message_handler(message)
 
-        watchdog.pet()
-
         sleep_helper.safe_sleep(config.sleep_duration)
-
-        watchdog.pet()
 
         message: bytes | None = packet_manager.listen()
         if message:
             cdh.message_handler(message)
 
-        watchdog.pet()
-
         sleep_helper.safe_sleep(config.sleep_duration)
-
-        watchdog.pet()
-
-        send_imu_data()
-
-        watchdog.pet()
 
         message: bytes | None = packet_manager.listen()
         if message:
             cdh.message_handler(message)
 
-        watchdog.pet()
-
         sleep_helper.safe_sleep(config.sleep_duration)
-
-        watchdog.pet()
 
         packet_manager.send(random.choice(config.jokes).encode("utf-8"))
 
@@ -217,11 +188,7 @@ try:
         if message:
             cdh.message_handler(message)
 
-        watchdog.pet()
-
         sleep_helper.safe_sleep(config.sleep_duration)
-
-        watchdog.pet()
 
     # def critical_power_operations():
     #     initial_boot()
