@@ -3,8 +3,6 @@ Built for the PySquared FC Board V4x
 Published: May, 2025
 """
 
-import gc
-
 import digitalio
 from busio import SPI
 
