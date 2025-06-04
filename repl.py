@@ -99,29 +99,5 @@ try:
         cdh,
     )
 
-    def initial_boot():
-        watchdog.pet()
-        f.beacon()
-        watchdog.pet()
-        f.listen()
-        watchdog.pet()
-
-    try:
-        c.boot_count.increment()
-
-        logger.info(
-            "FC Board Stats",
-            bytes_remaining=gc.mem_free(),
-            boot_number=c.boot_count.get(),
-        )
-
-        initial_boot()
-
-    except Exception as e:
-        logger.error("Error in Boot Sequence", e)
-
-    finally:
-        pass
-
 except Exception as e:
     logger.critical("An exception occurred within repl.py", e)
