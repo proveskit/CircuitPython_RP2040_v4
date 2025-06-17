@@ -22,7 +22,7 @@ try:
 except ImportError:
     import board
 
-from lib.proveskit_rp2040_v4.register import BitIndex, Register
+from lib.proveskit_rp2040_v4.register import Register
 from lib.pysquared.beacon import Beacon
 from lib.pysquared.cdh import CommandDataHandler
 from lib.pysquared.config.config import Config
@@ -34,7 +34,6 @@ from lib.pysquared.hardware.radio.manager.rfm9x import RFM9xManager
 from lib.pysquared.hardware.radio.packetizer.packet_manager import PacketManager
 from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
-from lib.pysquared.nvm.flag import Flag
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
 from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
@@ -46,7 +45,6 @@ rtc = MicrocontrollerManager()
 
 (boot_count := Counter(index=Register.boot_count)).increment()
 error_count: Counter = Counter(index=Register.error_count)
-use_fsk = Flag(index=Register.flag, bit_index=BitIndex.use_fsk)
 
 logger: Logger = Logger(
     error_counter=error_count,
@@ -82,7 +80,6 @@ try:
     radio = RFM9xManager(
         logger,
         config.radio,
-        use_fsk,
         spi0,
         initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
@@ -118,7 +115,6 @@ try:
         imu,
         magnetometer,
         radio,
-        use_fsk,
         error_count,
         boot_count,
     )
@@ -127,9 +123,7 @@ try:
         watchdog.pet()
         beacon.send()
         watchdog.pet()
-        message: bytes | None = packet_manager.listen()
-        if message:
-            cdh.message_handler(message)
+        cdh.listen_for_commands()
         watchdog.pet()
 
     try:
@@ -153,30 +147,22 @@ try:
 
         watchdog.pet()
 
-        message: bytes | None = packet_manager.listen()
-        if message:
-            cdh.message_handler(message)
+        cdh.listen_for_commands()
 
         sleep_helper.safe_sleep(config.sleep_duration)
 
         # TODO(nateinaction): replace me
         # f.state_of_health()
 
-        message: bytes | None = packet_manager.listen()
-        if message:
-            cdh.message_handler(message)
+        cdh.listen_for_commands()
 
         sleep_helper.safe_sleep(config.sleep_duration)
 
-        message: bytes | None = packet_manager.listen()
-        if message:
-            cdh.message_handler(message)
+        cdh.listen_for_commands()
 
         sleep_helper.safe_sleep(config.sleep_duration)
 
-        message: bytes | None = packet_manager.listen()
-        if message:
-            cdh.message_handler(message)
+        cdh.listen_for_commands()
 
         sleep_helper.safe_sleep(config.sleep_duration)
 
@@ -184,9 +170,7 @@ try:
 
         watchdog.pet()
 
-        message: bytes | None = packet_manager.listen()
-        if message:
-            cdh.message_handler(message)
+        cdh.listen_for_commands()
 
         sleep_helper.safe_sleep(config.sleep_duration)
 
