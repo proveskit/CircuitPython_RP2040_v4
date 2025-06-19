@@ -49,7 +49,7 @@ BOARD_MOUNT_POINT ?= ""
 VERSION ?= $(shell git tag --points-at HEAD --sort=-creatordate < /dev/null | head -n 1)
 
 .PHONY: install
-install-%: build-% ## Install the project onto a connected PROVES Kit use `make install BOARD_MOUNT_POINT=/my_board_destination/` to specify the mount point
+install-%: build-% ## Install the project onto a connected PROVES Kit use `make install-flight-software BOARD_MOUNT_POINT=/my_board_destination/` to specify the mount point
 ifeq ($(OS),Windows_NT)
 	rm -rf $(BOARD_MOUNT_POINT)
 	cp -r artifacts/proves/$*/* $(BOARD_MOUNT_POINT)
