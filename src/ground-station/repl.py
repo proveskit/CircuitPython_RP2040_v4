@@ -6,7 +6,7 @@ try:
 except ImportError:
     import board
 
-from lib.proveskit_rp2040_v4.register import Register
+from lib.proveskit_ground_station.proveskit_ground_station import GroundStation
 from lib.pysquared.cdh import CommandDataHandler
 from lib.pysquared.config.config import Config
 from lib.pysquared.hardware.busio import _spi_init
@@ -15,10 +15,9 @@ from lib.pysquared.hardware.radio.manager.rfm9x import RFM9xManager
 from lib.pysquared.hardware.radio.packetizer.packet_manager import PacketManager
 from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
-from lib.pysquared.repl.radio_test import RadioTest
 
 logger: Logger = Logger(
-    error_counter=Counter(index=Register.error_count),
+    error_counter=Counter(1),
     colorized=False,
 )
 config: Config = Config("config.json")
@@ -51,11 +50,11 @@ cdh = CommandDataHandler(
     packet_manager,
 )
 
-radio_test = RadioTest(
+ground_station = GroundStation(
     logger,
     config,
     packet_manager,
     cdh,
 )
 
-radio_test.run()
+ground_station.run()

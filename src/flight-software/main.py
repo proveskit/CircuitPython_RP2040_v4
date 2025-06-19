@@ -105,7 +105,7 @@ try:
 
     sleep_helper = SleepHelper(logger, watchdog, config)
 
-    cdh = CommandDataHandler(config, logger, radio)
+    cdh = CommandDataHandler(logger, config, packet_manager)
 
     beacon = Beacon(
         logger,

@@ -18,16 +18,16 @@ help: ## Display this help.
 	@$(UV) pip install --requirement ground-station/pyproject.toml
 
 .PHONY: download-libraries
-download-libraries: download-libraries/flight-software download-libraries/ground-station
+download-libraries: download-libraries-flight-software download-libraries-ground-station
 
-.PHONY: download-libraries/%
-download-libraries/%: uv .venv ## Download the required libraries
+.PHONY: download-libraries-%
+download-libraries-%: uv .venv ## Download the required libraries
 	@echo "Downloading libraries for $*..."
-	@$(UV) pip install --requirement $*/src/lib/requirements.txt --target $*/src/lib --no-deps --upgrade --quiet
-	@$(UV) pip --no-cache install $(PYSQUARED) --target $*/src/lib --no-deps --upgrade --quiet
+	@$(UV) pip install --requirement src/$*/lib/requirements.txt --target src/$*/lib --no-deps --upgrade --quiet
+	@$(UV) pip --no-cache install $(PYSQUARED) --target src/$*/lib --no-deps --upgrade --quiet
 
-	@rm -rf $*/src/lib/*.dist-info
-	@rm -rf $*/src/lib/.lock
+	@rm -rf src/$*/lib/*.dist-info
+	@rm -rf src/$*/lib/.lock
 
 .PHONY: pre-commit-install
 pre-commit-install: uv
@@ -73,12 +73,12 @@ clean: ## Remove all gitignored files such as downloaded libraries and artifacts
 build: build-flight-software build-ground-station ## Build all projects
 
 .PHONY: build-*
-build-%: download-libraries/% mpy-cross ## Build the project, store the result in the artifacts directory
+build-%: download-libraries-% mpy-cross ## Build the project, store the result in the artifacts directory
 	@echo "Creating artifacts/proves/$*"
 	@mkdir -p artifacts/proves/$*
 	@echo "__version__ = '$(VERSION)'" > artifacts/proves/$*/version.py
 	$(call compile_mpy,$*)
-	$(call rsync_to_dest,$*/src,artifacts/proves/$*/)
+	$(call rsync_to_dest,src/$*,artifacts/proves/$*/)
 	@$(UV) run python -c "import os; [os.remove(os.path.join(root, file)) for root, _, files in os.walk('artifacts/proves/$*/lib') for file in files if file.endswith('.py')]"
 	@echo "Creating artifacts/proves/$*.zip"
 	@zip -r artifacts/proves/$*.zip artifacts/proves/$* > /dev/null
@@ -103,7 +103,7 @@ $(TOOLS_DIR):
 	mkdir -p $(TOOLS_DIR)
 
 ### Tool Versions
-UV_VERSION ?= 0.5.24
+UV_VERSION ?= 0.7.13
 MPY_CROSS_VERSION ?= 9.0.5
 
 UV_DIR ?= $(TOOLS_DIR)/uv-$(UV_VERSION)
@@ -143,5 +143,5 @@ endif
 endif
 
 define compile_mpy
-	@$(UV) run python -c "import os, subprocess; [subprocess.run(['$(MPY_CROSS)', os.path.join(root, file)]) for root, _, files in os.walk('$(1)/src/lib') for file in files if file.endswith('.py')]" || exit 1
+	@$(UV) run python -c "import os, subprocess; [subprocess.run(['$(MPY_CROSS)', os.path.join(root, file)]) for root, _, files in os.walk('src/$(1)/lib') for file in files if file.endswith('.py')]" || exit 1
 endef
