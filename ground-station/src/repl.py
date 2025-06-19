@@ -7,6 +7,7 @@ except ImportError:
     import board
 
 from lib.proveskit_rp2040_v4.register import Register
+from lib.pysquared.cdh import CommandDataHandler
 from lib.pysquared.config.config import Config
 from lib.pysquared.hardware.busio import _spi_init
 from lib.pysquared.hardware.digitalio import initialize_pin
@@ -14,6 +15,7 @@ from lib.pysquared.hardware.radio.manager.rfm9x import RFM9xManager
 from lib.pysquared.hardware.radio.packetizer.packet_manager import PacketManager
 from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
+from lib.pysquared.repl.radio_test import RadioTest
 
 logger: Logger = Logger(
     error_counter=Counter(index=Register.error_count),
@@ -43,7 +45,17 @@ packet_manager = PacketManager(
     0.2,
 )
 
-while True:
-    bytes = packet_manager.listen(3)
-    if bytes is not None:
-        logger.info(f"Received {len(bytes)} bytes: {bytes.hex()}")
+cdh = CommandDataHandler(
+    logger,
+    config,
+    packet_manager,
+)
+
+radio_test = RadioTest(
+    logger,
+    config,
+    packet_manager,
+    cdh,
+)
+
+radio_test.run()
