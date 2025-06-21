@@ -103,7 +103,7 @@ try:
 
     imu = LSM6DSOXManager(logger, i2c1, 0x6B)
 
-    sleep_helper = SleepHelper(logger, watchdog, config)
+    sleep_helper = SleepHelper(logger, config, watchdog)
 
     cdh = CommandDataHandler(logger, config, packet_manager)
 
