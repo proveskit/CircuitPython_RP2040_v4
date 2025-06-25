@@ -14,8 +14,7 @@ help: ## Display this help.
 	@echo "Creating virtual environment..."
 	@$(MAKE) uv
 	@$(UV) venv
-	@$(UV) pip install --requirement flight-software/pyproject.toml
-	@$(UV) pip install --requirement ground-station/pyproject.toml
+	@$(UV) sync
 
 .PHONY: download-libraries
 download-libraries: download-libraries-flight-software download-libraries-ground-station
