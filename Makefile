@@ -132,7 +132,7 @@ CIRCUIT_PYTHON ?= $(TOOLS_DIR)/adafruit-circuitpython-proveskit_rp2040_v4-en_US-
 .PHONY: circuit-python
 circuit-python: $(CIRCUIT_PYTHON) ## Download Circuit Python firmware
 $(CIRCUIT_PYTHON): $(TOOLS_DIR)
-	@test -s $(CIRCUIT_PYTHON) || curl -o $(CIRCUIT_PYTHON) -fsSL https://downloads.circuitpython.org/bin/proveskit_rp2040_v4/en_US/adafruit-circuitpython-proveskit_rp2040_v4-en_US-9.2.8.uf2
+	@test -s $(CIRCUIT_PYTHON) || curl -o $(CIRCUIT_PYTHON) -fsSL https://downloads.circuitpython.org/bin/proveskit_rp2040_v4/en_US/adafruit-circuitpython-proveskit_rp2040_v4-en_US-$(CIRCUIT_PYTHON_VERSION).uf2
 
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
