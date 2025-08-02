@@ -36,6 +36,7 @@ from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
 from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
+from lib.pysquared.sdcard import SDCardManager
 from version import __version__
 
 boot_time: float = time.time()
@@ -44,6 +45,7 @@ rtc = MicrocontrollerManager()
 
 (boot_count := Counter(index=Register.boot_count)).increment()
 error_count: Counter = Counter(index=Register.error_count)
+
 
 logger: Logger = Logger(
     error_counter=error_count,
@@ -75,6 +77,11 @@ try:
         board.SPI0_SCK,
         board.SPI0_MOSI,
         board.SPI0_MISO,
+    )
+
+    sdCard: SDCardManager = SDCardManager(
+        spi0,
+        
     )
 
     radio = RFM9xManager(
