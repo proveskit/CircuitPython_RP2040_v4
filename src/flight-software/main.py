@@ -84,6 +84,8 @@ try:
         board.SPI0_CS1
     )
 
+    logger.sd_card = sdCard
+
     radio = RFM9xManager(
         logger,
         config.radio,
@@ -92,7 +94,6 @@ try:
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
     )
 
-    logger.sd_card = sdCard
 
     packet_manager = PacketManager(
         logger,
