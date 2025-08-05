@@ -13,7 +13,7 @@ storage.disable_usb_drive()
 print("Disabling USB drive")
 time.sleep(wait_time)
 
-storage.mount("/", False)
+storage.remount("/", False)
 print("Remounting root filesystem")
 time.sleep(wait_time)
 
