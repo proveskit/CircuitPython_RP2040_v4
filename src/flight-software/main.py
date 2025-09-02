@@ -31,12 +31,12 @@ from lib.pysquared.hardware.imu.manager.lsm6dsox import LSM6DSOXManager
 from lib.pysquared.hardware.magnetometer.manager.lis2mdl import LIS2MDLManager
 from lib.pysquared.hardware.radio.manager.rfm9x import RFM9xManager
 from lib.pysquared.hardware.radio.packetizer.packet_manager import PacketManager
+from lib.pysquared.hardware.sd_card.manager.sd_card import SDCardManager
 from lib.pysquared.logger import Logger, LogLevel
 from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
 from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
-from lib.pysquared.sd_card import SDCardManager
 from version import __version__
 
 boot_time: float = time.time()
@@ -79,12 +79,9 @@ try:
         board.SPI0_MISO,
     )
 
-    sdCard: SDCardManager = SDCardManager(
-        spi0, 
-        board.SPI0_CS1
-    )
+    sdCard: SDCardManager = SDCardManager(spi0, board.SPI0_CS1)
 
-    logger.sd_card = sdCard
+    logger.set_log_dir("/sd")
 
     radio = RFM9xManager(
         logger,
@@ -93,7 +90,6 @@ try:
         initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
     )
-
 
     packet_manager = PacketManager(
         logger,
