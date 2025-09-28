@@ -114,7 +114,8 @@ try:
         packet_manager,
         boot_time,
         imu,
-        magnetometer,
+        # TODO (mikefly123): add back in magnetometer once it is fixed upstream
+        # magnetometer,
         radio,
         error_count,
         boot_count,
@@ -132,7 +133,9 @@ try:
 
         cdh.listen_for_commands(10)
 
-        sleep_helper.safe_sleep(config.sleep_duration)
+        beacon.send()
+
+        cdh.listen_for_commands(config.sleep_duration)
 
     try:
         logger.info("Entering main loop")
