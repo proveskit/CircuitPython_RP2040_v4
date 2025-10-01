@@ -1,19 +1,12 @@
-# This is where the magic happens!
-# This file is executed on every boot (including wake-boot from deepsleep)
-# Created By: Michael Pham
-
 """
-Built for the PySquared FC Board
-Version: 2.0.0
-Published: Nov 19, 2024
+Built for the PySquared FC Board V4x
+Published: May, 2025
 """
 
-import gc
 import os
 import time
 
 import digitalio
-import microcontroller
 from busio import SPI
 
 try:
@@ -31,12 +24,12 @@ from lib.pysquared.hardware.imu.manager.lsm6dsox import LSM6DSOXManager
 from lib.pysquared.hardware.magnetometer.manager.lis2mdl import LIS2MDLManager
 from lib.pysquared.hardware.radio.manager.rfm9x import RFM9xManager
 from lib.pysquared.hardware.radio.packetizer.packet_manager import PacketManager
-from lib.pysquared.logger import Logger, LogLevel
+from lib.pysquared.hardware.sd_card.manager.sd_card import SDCardManager
+from lib.pysquared.logger import Logger
 from lib.pysquared.nvm.counter import Counter
 from lib.pysquared.rtc.manager.microcontroller import MicrocontrollerManager
 from lib.pysquared.sleep_helper import SleepHelper
 from lib.pysquared.watchdog import Watchdog
-from lib.pysquared.sd_card import SDCardManager
 from version import __version__
 
 boot_time: float = time.time()
@@ -46,11 +39,9 @@ rtc = MicrocontrollerManager()
 (boot_count := Counter(index=Register.boot_count)).increment()
 error_count: Counter = Counter(index=Register.error_count)
 
-
 logger: Logger = Logger(
     error_counter=error_count,
     colorized=False,
-    log_level=LogLevel.INFO,
 )
 
 logger.info(
@@ -60,13 +51,7 @@ logger.info(
 )
 
 try:
-    loiter_time: int = 5
-    for i in range(loiter_time):
-        logger.info(f"Code Starting in {loiter_time-i} seconds")
-        time.sleep(1)
-
     watchdog = Watchdog(logger, board.WDT_WDI)
-    watchdog.pet()
 
     logger.debug("Initializing Config")
     config: Config = Config("config.json")
@@ -79,12 +64,9 @@ try:
         board.SPI0_MISO,
     )
 
-    sdCard: SDCardManager = SDCardManager(
-        spi0, 
-        board.SPI0_CS1
-    )
+    sdCard: SDCardManager = SDCardManager(spi0, board.SPI0_CS1)
 
-    logger.sd_card = sdCard
+    logger.set_log_dir("/sd")
 
     radio = RFM9xManager(
         logger,
@@ -93,7 +75,6 @@ try:
         initialize_pin(logger, board.SPI0_CS0, digitalio.Direction.OUTPUT, True),
         initialize_pin(logger, board.RF1_RST, digitalio.Direction.OUTPUT, True),
     )
-
 
     packet_manager = PacketManager(
         logger,
@@ -126,39 +107,7 @@ try:
         imu,
         magnetometer,
         radio,
-        error_count,
-        boot_count,
     )
 
-    def nominal_power_loop():
-        logger.debug(
-            "FC Board Stats",
-            bytes_remaining=gc.mem_free(),
-        )
-
-        packet_manager.send(config.radio.license.encode("utf-8"))
-
-        beacon.send()
-
-        cdh.listen_for_commands(10)
-
-        beacon.send()
-
-        cdh.listen_for_commands(config.sleep_duration)
-
-    try:
-        logger.info("Entering main loop")
-        while True:
-            # TODO(nateinaction): Modify behavior based on power state
-            nominal_power_loop()
-
-    except Exception as e:
-        logger.critical("Critical in Main Loop", e)
-        time.sleep(10)
-        microcontroller.on_next_reset(microcontroller.RunMode.NORMAL)
-        microcontroller.reset()
-    finally:
-        logger.info("Going Neutral!")
-
 except Exception as e:
-    logger.critical("An exception occured within main.py", e)
+    logger.critical("An exception occurred within repl.py", e)
