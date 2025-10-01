@@ -100,8 +100,7 @@ try:
         packet_manager,
         boot_time,
         imu,
-        # TODO (mikefly123): add back in magnetometer once it is fixed upstream
-        # magnetometer,
+        magnetometer,
         radio,
     )
 
